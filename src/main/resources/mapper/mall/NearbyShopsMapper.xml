@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kainiu.mall.mapper.NearbyShopsMapper">
+
+    <!--  附近商家列表查询  -->
+    <select id="nearbyShopsList" resultType="com.kainiu.mall.entity.Merchants">
+        SELECT
+        location.location_id as locationId,
+        location.name as merchantName,
+        location.location as location,
+        ROUND(6378.138 * 2 * ASIN(SQRT(POW(SIN((#{lat}  * PI() / 180 - location.lat * PI() / 180) / 2),2) + COS(#{lat} * PI() / 180) * COS(location.lat * PI() / 180) * POW(SIN(( #{lon} * PI() / 180 - location.lon * PI() / 180) / 2),2))) * 1000) AS distance,
+        location.lon as lon,
+        location.lat as lat,
+        location.telephone as telephone,
+        location.business_hours as businessHours,
+        location.shop_intro as storeIntroduce,
+        merchantUser.shop_img as shopImg
+        FROM
+        c_merchant_location location
+        LEFT JOIN
+        b_merchant_user merchantUser
+        ON
+        location.mobile_phone = merchantUser.mobile_phone
+        ORDER BY
+        distance
+        <if test="pageBean.page!=null and pageBean.rows != null ">
+            limit #{pageBean.page},#{pageBean.rows}
+        </if>
+    </select>
+
+    <!--  附近商家详情查询  -->
+    <select id="nearbyShopsQuery" resultType="com.kainiu.mall.entity.Merchants">
+        SELECT
+        location.location_id as locationId,
+        location.name as merchantName,
+        location.location as location,
+        location.lon as lon,
+        location.lat as lat,
+        location.telephone as telephone,
+        location.business_hours as businessHours,
+        location.shop_intro as storeIntroduce,
+        merchantUser.shop_img as shopImg
+        FROM
+        c_merchant_location location
+        LEFT JOIN
+        b_merchant_user merchantUser
+        ON
+        location.mobile_phone =location.mobile_phone
+        where
+            location.location_id = #{locationId}
+        GROUP BY location.location_id
+
+
+    </select>
+
+
+</mapper>

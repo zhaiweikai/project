@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kainiu.mall.mapper.IntegralMapper">
+
+    <!--账户积分余额-->
+    <select id="integralBalance" resultType="Integer">
+        select integral_wallet from c_mphone_auth where webchat_no =#{webchatNo}
+    </select>
+
+    <!--积分消费记录-->
+    <select id="expenseCalendar" resultType="com.kainiu.mall.entity.ConsumeDetail">
+        SELECT
+        detail.*,
+        info.picture as picture,
+        info.name as goodsName,
+        info.describ as describ,
+        users.merchant_name as merchantsName,
+        users.shop_img as merchantsIcon
+        FROM
+        ((c_consume_detail detail LEFT JOIN c_goods_order orders on detail.order_code = orders.order_code)
+        LEFT JOIN c_goods_info info ON orders.goods_id = info.goods_id) LEFT JOIN b_merchant_user users on detail.mobile_phone = users.mobile_phone
+        WHERE
+        detail.webchat_no = #{webchatNo}
+        ORDER BY detail.create_time desc
+        <if test="pageBean.page!=null and pageBean.rows != null ">
+            limit #{pageBean.page},#{pageBean.rows}
+        </if>
+    </select>
+
+
+
+
+
+</mapper>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kainiu.mall.mapper.PersonalCenterMapper">
+
+    <!--  订单列表  -->
+    <resultMap id="orderListQueryMapper" type="com.kainiu.mall.entity.OrderList">
+
+        <collection property="goodsInfo"   ofType="com.kainiu.mall.entity.GoodsInfo">
+            <id column="goodsId" property="goods_id"></id>
+            <result column="describ" property="describ"></result>
+            <result column="picture" property="picture"></result>
+        </collection>
+        <collection property="goodsOrder"   ofType="com.kainiu.mall.entity.GodsOrder">
+            <id column="orderCode" property="orderCode"></id>
+            <result column="status" property="status"></result>
+            <result column="integral" property="integral"></result>
+            <result column="nums" property="nums"></result>
+            <result column="integralReal" property="integralReal"></result>
+        </collection>
+    </resultMap>
+    <select id="orderListQuery" resultMap="orderListQueryMapper">
+        SELECT
+            orders.order_code as orderCode,
+            info.picture as picture,
+            orders.integral_real as integralReal,
+            orders.*,
+            info.*
+
+        FROM
+            c_goods_order orders,
+            c_goods_info info
+        <where>
+            orders.goods_id = info.goods_id
+            <if test="status!=null and status!=0">
+                and orders.status = #{status}
+            </if>
+            <if test="webchatNo!=null and webchatNo!=''">
+                and orders.webchat_no = #{webchatNo}
+            </if>
+        </where>
+        ORDER BY orders.create_time desc
+        <if test="pageBean.page!=null and pageBean.rows != null ">
+            limit #{pageBean.page},#{pageBean.rows}
+        </if>
+    </select>
+
+    <!--  修改订单状态 -->
+    <update id="modifyState" parameterType="map">
+        UPDATE c_goods_order set status = 3
+        where order_code = #{orderCode}
+    </update>
+
+    <!-- 删除收货地址 -->
+    <delete id="cancelShippingAddress">
+        delete from c_address where addr_id = #{addrId}
+    </delete>
+
+    <!-- 新增收货地址 -->
+    <insert id="appendShippingAddress" parameterType="com.kainiu.mall.entity.Address">
+        insert into c_address (addr_id,name,mobile_phone,address,webchat_no,is_default)
+        values(#{address.addrId},#{address.name},#{address.mobilePhone},#{address.address},#{address.webchatNo},#{address.isDefault})
+    </insert>
+    <!--  修改收货地址 -->
+    <update id="updateShippingAddress" parameterType="com.kainiu.mall.entity.Address">
+        UPDATE
+            c_address
+        set name = #{address.name},
+            mobile_phone = #{address.mobilePhone},
+            address = #{address.address},
+            is_default = #{address.isDefault}
+        where addr_id = #{address.addrId}
+    </update>
+
+    <!--  修改默认收货地址 -->
+    <update id="updateDefaultAddress" parameterType="map">
+        update c_address set is_default = 0 where webchat_no = #{webchatNo}  and addr_id != #{addrId}
+    </update>
+
+</mapper>

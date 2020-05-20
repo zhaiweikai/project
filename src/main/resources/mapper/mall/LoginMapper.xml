@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kainiu.mall.mapper.LoginMapper">
+
+    <!--  通过openID查询用户  -->
+    <select id="loginUserQuery" resultType="com.kainiu.mall.entity.Customer">
+        SELECT
+            *
+        from
+            c_mphone_auth
+        where
+          webchat_no = #{webchatNo}
+
+    </select>
+
+    <!-- 新增用户 -->
+    <insert id="newUsers" parameterType="com.kainiu.mall.entity.Customer">
+        insert into c_mphone_auth (webchat_no)
+        values(#{customer.webchatNo})
+    </insert>
+
+    <!-- 修改用户-->
+    <update id="updateUsers" parameterType="com.kainiu.mall.entity.Customer">
+        UPDATE c_mphone_auth set mobile_phone = #{customer.obilePhone}
+        where webchat_no = #{customer.webchatNo}
+    </update>
+
+    <!--  通过协议id查询洗衣  -->
+    <select id="userAgreement" resultType="com.kainiu.mall.entity.FinProtocol">
+        SELECT
+            *
+        from
+            fin_protocol
+        where
+          id = #{id}
+
+    </select>
+
+
+</mapper>

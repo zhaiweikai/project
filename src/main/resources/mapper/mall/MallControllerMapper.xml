@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kainiu.mall.mapper.MallControllerMapper">
+
+    <!--商品类型查询(只查前八条)-->
+    <select id="mallClassify" resultType="com.kainiu.mall.entity.GoodsType">
+        select * from c_goods_type ORDER BY create_time
+        <if test="rows!=null and rows!=0">
+            LIMIT #{rows}
+        </if>
+    </select>
+
+    <!--  商品列表查询  -->
+    <select id="goodsListQuery" resultType="com.kainiu.mall.entity.GoodsInfo">
+        select
+        info.* ,
+        (select count(*) from c_goods_order where goods_id = info.goods_id) as changeNumber
+        from c_goods_info  info
+        <where>
+            is_uc=1
+            <if test="keys!=null and keys!=''">
+                and info.gkey like concat('%',#{keys},'%')
+            </if>
+            <if test="typeId!='' and typeId!=null">
+                and  info.type_id = #{typeId}
+            </if>
+        </where>
+        ORDER BY info.create_time desc
+        <if test="pageBean.page!=null and pageBean.rows != null ">
+            limit #{pageBean.page},#{pageBean.rows}
+        </if>
+
+    </select>
+
+    <!--  商品详情查询  -->
+    <select id="goodsDetailQuery" resultType="com.kainiu.mall.entity.GoodsInfo">
+        select
+        info.* ,
+        (select count(*) from c_goods_order where goods_id = info.goods_id) as changeNumber
+        from c_goods_info  info
+        <where>
+            1=1
+            <if test="goodsId!=null and goodsId!=''">
+                and info.goods_id = #{goodsId}
+            </if>
+        </where>
+
+    </select>
+    <!--  通过微信号找出默认收货地址  -->
+    <select id="defaultAddressQuery" resultType="com.kainiu.mall.entity.Address">
+        select
+        *
+        FROM
+        c_address
+        <where>
+            1=1
+            <if test="webchatNo!=null and webchatNo!=''">
+                and webchat_no= #{webchatNo}
+                and is_default=1
+            </if>
+            <if test="addrId!=null and addrId!=''">
+                and addr_id= #{addrId}
+            </if>
+        </where>
+    </select>
+
+    <!--通过微信号进行收货地址查询-->
+    <select id="addressQuery" resultType="com.kainiu.mall.entity.Address">
+        select
+        *
+        FROM
+        c_address
+        <where>
+            1=1
+            <if test="webchatNo!=null and webchatNo!=''">
+                and webchat_no= #{webchatNo}
+            </if>
+        </where>
+        ORDER BY create_time desc
+    </select>
+
+    <!--  修改用户积分 -->
+    <update id="updateIntegral" parameterType="map">
+        UPDATE c_mphone_auth set integral_wallet = integral_wallet-#{integral}
+        where webchat_no = #{webchatNo}
+    </update>
+
+    <!-- 新增商品订单-->
+    <insert id="newOrder" parameterType="com.kainiu.mall.entity.GodsOrder">
+        insert into c_goods_order (order_code,integral,integral_real,nums,freight,addr_id,goods_id,webchat_no)
+        values(#{godsOrder.orderCode},#{godsOrder.integral},#{godsOrder.integralReal},
+        #{godsOrder.nums},#{godsOrder.freight},#{godsOrder.addrId},#{godsOrder.goodsId},#{godsOrder.webchatNo})
+    </insert>
+
+    <!-- 获取最大id-->
+    <select id="biggestId" resultType="String">
+        select MAX(${uid}) from ${tableName}
+    </select>
+
+    <!--订单详情查询-->
+    <resultMap id="orderDetailsQueryMapper" type="com.kainiu.mall.entity.OrderDetails">
+
+        <collection property="goodsInfo"   ofType="com.kainiu.mall.entity.GoodsInfo">
+            <id column="goodsId" property="goods_id"></id>
+            <result column="infonName" property="name"></result>
+            <result column="describ" property="describ"></result>
+            <result column="picture" property="picture"></result>
+        </collection>
+        <collection property="goodsOrder"   ofType="com.kainiu.mall.entity.GodsOrder">
+            <id column="orderCode" property="order_code"></id>
+            <result column="nums" property="nums"></result>
+            <result column="integral" property="integral"></result>
+            <result column="integralReal" property="integralReal"></result>
+            <result column="freight" property="freight"></result>
+        </collection>
+        <collection property="address"   ofType="com.kainiu.mall.entity.Address">
+            <id column="addrId" property="addr_id"></id>
+            <result column="name" property="name"></result>
+            <result column="mobilePhone" property="mobilePhone"></result>
+            <result column="address" property="address"></result>
+        </collection>
+    </resultMap>
+    <select id="orderDetailsQuery" resultMap="orderDetailsQueryMapper">
+        SELECT
+            info.name as infonName,
+            info.picture as picture,
+            orders.integral_real as integralReal,
+            address.mobile_phone as mobilePhone,
+            address.name as name,
+            orders.*,
+            info.*,
+            address.*
+
+        FROM
+            c_goods_order orders,
+            c_goods_info info,
+            c_address address
+        where
+            orders.goods_id = info.goods_id
+            and orders.addr_id = address.addr_id
+            and order_code = #{orderCode}
+
+    </select>
+
+    <!--判断积分是否购买该商品-->
+    <select id="integralBalance" resultType="Integer">
+        SELECT (integral_wallet-#{integral}) as balance FROM c_mphone_auth WHERE webchat_no = #{webchatNo}
+    </select>
+
+    <!-- 新增积分消费记录 -->
+    <insert id="newRecord" parameterType="map">
+        INSERT INTO c_consume_detail
+            (integrate,order_code,webchat_no)
+            values(#{integral},#{orderCode},#{webchatNo})
+    </insert>
+
+</mapper>
